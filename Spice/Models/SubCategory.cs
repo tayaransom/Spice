@@ -1,22 +1,25 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Spice.Models
 {
     public class SubCategory
     {
+
         [Key]
         public int Id { get; set; }
 
         [Display(Name = "SubCategory Name")]
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
-        [Required]
         [Display(Name = "Category")]
+        [Required]
         public int CategoryId { get; set; }
 
         [ForeignKey("CategoryId")]
-        public virtual Category Category { get; set; }
+        [ValidateNever]
+        public virtual Category Category { get; set; } = default!;
     }
 }

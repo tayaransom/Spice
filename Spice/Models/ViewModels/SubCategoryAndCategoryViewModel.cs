@@ -1,10 +1,18 @@
-﻿namespace Spice.Models.ViewModels
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+
+namespace Spice.Models.ViewModels
 {
     public class SubCategoryAndCategoryViewModel
     {
-        public IEnumerable<Category> CategoryList { get; set; }
-        public SubCategory SubCategory { get; set; }
-        public List<string> SubCategoryList { get; set; }
-        public string StatusMessage { get; set; }
+        [ValidateNever]
+        public IEnumerable<Category> CategoryList { get; set; } = default!;
+
+        public SubCategory SubCategory { get; set; } = default!;
+
+        [ValidateNever]
+        public List<string> SubCategoryList { get; set; } = default!;
+
+        [ValidateNever]
+        public string StatusMessage { get; set; } = string.Empty;
     }
 }

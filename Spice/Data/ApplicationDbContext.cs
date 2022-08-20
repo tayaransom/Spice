@@ -10,7 +10,9 @@ namespace Spice.Data
             : base(options)
         {
         }
-        public DbSet<Category> Category { get; set; }
-        public DbSet<SubCategory> SubCategory { get; set; }
+        public DbSet<Category> Category { get; set; } = default!;
+        public DbSet<SubCategory> SubCategory { get; set; } = default!;
+        public DbSet<MenuItem> MenuItem { get; set; } = default!;
+
     }
 }
