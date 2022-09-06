@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Spice.Data;
 using Spice.Models.ViewModels;
 using Spice.Utility;
+using Spice.Models;
 
 namespace Spice.Areas.Admin.Controllers
 {
@@ -40,18 +41,13 @@ namespace Spice.Areas.Admin.Controllers
             return View(MenuItemVM);
         }
 
-        //GET - POST
+        //CREATE - POST
 
         [HttpPost, ActionName("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreatePOST()
         {
             MenuItemVM.MenuItem.SubCategoryId = Convert.ToInt32(Request.Form["SubCategoryId"].ToString());
-
-            if (!ModelState.IsValid)
-            {
-                return View(MenuItemVM);
-            }
 
             _db.MenuItem.Add(MenuItemVM.MenuItem);
             await _db.SaveChangesAsync();
@@ -63,7 +59,7 @@ namespace Spice.Areas.Admin.Controllers
 
             var menuItemFromDb = await _db.MenuItem.FindAsync(MenuItemVM.MenuItem.Id);
 
-            if (files.Count() > 0)
+            if (files.Count > 0)
             {
                 //files has been uploaded
                 var uploads = Path.Combine(webRootPath, "images");
@@ -84,6 +80,138 @@ namespace Spice.Areas.Admin.Controllers
             }
 
             await _db.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        //EDIT - CREATE
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if(id== null)
+            {
+                return NotFound();
+            }
+
+            MenuItemVM.MenuItem = await _db.MenuItem.Include(m => m.Category).Include(m => m.SubCategory).SingleOrDefaultAsync(m => m.Id == id);
+            MenuItemVM.SubCategory = await _db.SubCategory.Where(s => s.CategoryId == MenuItemVM.MenuItem.CategoryId).ToListAsync();
+
+            if(MenuItemVM.MenuItem == null)
+            {
+                return NotFound();
+            }
+
+            return View(MenuItemVM);
+        }
+
+        //EDIT - POST
+
+        [HttpPost, ActionName("Edit")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditPOST(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            MenuItemVM.MenuItem.SubCategoryId = Convert.ToInt32(Request.Form["SubCategoryId"].ToString());
+
+            //Work on the image saving section
+
+            string webRootPath = _hostingEnvironment.WebRootPath;
+            var files = HttpContext.Request.Form.Files;
+
+            var menuItemFromDb = await _db.MenuItem.FindAsync(MenuItemVM.MenuItem.Id);
+
+            if (files.Count > 0)
+            {
+                //new image has been uploaded
+                var uploads = Path.Combine(webRootPath, "images");
+                var extension_new = Path.GetExtension(files[0].FileName);
+
+                //delete the original file
+                var imagePath = Path.Combine(webRootPath, menuItemFromDb.Image.TrimStart('\\'));
+
+                if (System.IO.File.Exists(imagePath))
+                {
+                    System.IO.File.Delete(imagePath);
+                }
+
+                //upload new file
+                using (var filesStream = new FileStream(Path.Combine(uploads, MenuItemVM.MenuItem.Id + extension_new), FileMode.Create))
+                {
+                    files[0].CopyTo(filesStream);
+                }
+                menuItemFromDb.Image = @"\images\" + MenuItemVM.MenuItem.Id + extension_new;
+            }
+
+            menuItemFromDb.Name = MenuItemVM.MenuItem.Name;
+            menuItemFromDb.Description = MenuItemVM.MenuItem.Description;
+            menuItemFromDb.Price = MenuItemVM.MenuItem.Price;
+            menuItemFromDb.Spicyness = MenuItemVM.MenuItem.Spicyness;
+            menuItemFromDb.CategoryId = MenuItemVM.MenuItem.CategoryId;
+            menuItemFromDb.SubCategoryId = MenuItemVM.MenuItem.SubCategoryId;
+
+            await _db.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        //GET - DETAILS
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            MenuItemVM.MenuItem = await _db.MenuItem.Include(m => m.Category).Include(m => m.SubCategory).SingleOrDefaultAsync(m => m.Id == id);
+
+            if (MenuItemVM.MenuItem == null)
+            {
+                return NotFound();
+            }
+
+            return View(MenuItemVM);
+        }
+        //GET - DELETE
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            MenuItemVM.MenuItem = await _db.MenuItem.Include(m => m.Category).Include(m => m.SubCategory).SingleOrDefaultAsync(m => m.Id == id);
+
+            if (MenuItemVM.MenuItem == null)
+            {
+                return NotFound();
+            }
+
+            return View(MenuItemVM);
+        }
+
+        //POST - DELETE
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            string webRootPath = _hostingEnvironment.WebRootPath;
+            MenuItem menuItem = await _db.MenuItem.FindAsync(id);
+
+            if (menuItem != null)
+            {
+                var imagePath = Path.Combine(webRootPath, menuItem.Image.TrimStart('\\'));
+
+                if (System.IO.File.Exists(imagePath))
+                {
+                    System.IO.File.Delete(imagePath);
+                }
+                _db.MenuItem.Remove(menuItem);
+                await _db.SaveChangesAsync();
+
+            }
 
             return RedirectToAction(nameof(Index));
         }

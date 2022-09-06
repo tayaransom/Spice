@@ -13,6 +13,8 @@ namespace Spice.Data
         public DbSet<Category> Category { get; set; } = default!;
         public DbSet<SubCategory> SubCategory { get; set; } = default!;
         public DbSet<MenuItem> MenuItem { get; set; } = default!;
+        public DbSet<Coupon> Coupon { get; set; } = default!;
+
 
     }
 }
